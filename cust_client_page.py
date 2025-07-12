@@ -117,3 +117,62 @@ class SnowflakeCortexPaginator:
           """
           
           return self.paginate_cortex_results(enhanced_query, page_size)
+
+
+# Configuration
+connection_params = {
+    'user': 'your_username',
+    'password': 'your_password',
+    'account': 'your_account',
+    'warehouse': 'your_warehouse',
+    'database': 'your_database',
+    'schema': 'your_schema'
+}
+
+# Initialize paginator
+paginator = SnowflakeCortexPaginator(connection_params)
+# Define base query
+base_query = """
+SELECT 
+    customer_id,
+    transaction_data,
+    customer_profile,
+    feedback_text
+FROM customer_analytics
+WHERE created_timestamp >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+"""
+# Define AI functions to apply
+ai_functions = {
+    'sentiment_analysis': """
+        SNOWFLAKE.CORTEX.SENTIMENT(feedback_text)
+    """,
+    'content_summary': """
+        SNOWFLAKE.CORTEX.SUMMARIZE(
+            GET(transaction_data, 'purchase_history')::STRING
+        )
+    """,
+    'classification': """
+        SNOWFLAKE.CORTEX.CLASSIFY_TEXT(
+            feedback_text,
+            ['positive', 'negative', 'neutral']
+        )
+    """
+}
+# Process data with pagination
+total_processed = 0
+for page in paginator.process_with_cortex_ai(
+    base_query, 
+    ai_functions, 
+    page_size=500
+):
+    print(f"Processing page {page['page_number']}")
+    print(f"Records in page: {page['total_records']}")
+    print(f"Execution time: {page['execution_time']:.2f} seconds")
+    
+    # Process each record
+    for record in page['data']:
+        # Your processing logic here
+        process_ai_insights(record)
+        total_processed += 1
+    
+    print(f"Total processed so far: {total_processed}")
