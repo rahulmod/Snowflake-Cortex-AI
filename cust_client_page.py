@@ -118,6 +118,67 @@ class SnowflakeCortexPaginator:
           
           return self.paginate_cortex_results(enhanced_query, page_size)
 
+    def get_optimal_page_size(query_complexity: str, data_size_mb: float) -> int:
+        """Determine optimal page size based on query and data characteristics"""
+        
+        base_size = 1000
+        
+        if query_complexity == 'high':  # Multiple AI functions
+            base_size = 500
+        elif query_complexity == 'low':  # Simple queries
+            base_size = 2000
+        
+        # Adjust for data size
+        if data_size_mb > 100:
+            base_size = int(base_size * 0.7)
+        
+    return base_size
+
+
+# For independent pages, implement parallel processing:
+
+import concurrent.futures
+from typing import List
+
+def process_pages_parallel(
+    paginator: SnowflakeCortexPaginator,
+    query: str,
+    page_ranges: List[tuple],
+    max_workers: int = 4
+) -> List[Dict[str, Any]]:
+    """Process multiple page ranges in parallel"""
+    
+    def process_single_range(page_range):
+        start_offset, end_offset = page_range
+        results = []
+        
+        for page in paginator.paginate_cortex_results(
+            query, 
+            page_size=1000,
+            offset_start=start_offset,
+            offset_end=end_offset
+        ):
+            results.extend(page['data'])
+        
+        return results
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_range = {
+            executor.submit(process_single_range, page_range): page_range
+            for page_range in page_ranges
+        }
+        
+        all_results = []
+        for future in concurrent.futures.as_completed(future_to_range):
+            page_range = future_to_range[future]
+            try:
+                results = future.result()
+                all_results.extend(results)
+            except Exception as e:
+                print(f"Error processing range {page_range}: {e}")
+        
+        return all_results
+
 
 # Configuration
 connection_params = {
