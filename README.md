@@ -52,7 +52,7 @@ Log rotation
 
 Usage Examples
 Register an API Endpoint:
-sqlCALL register_api_endpoint(
+CALL register_api_endpoint(
     'Get Orders',
     '/api/v1/orders',
     'GET',
@@ -62,8 +62,9 @@ sqlCALL register_api_endpoint(
     TRUE,
     100
 );
+
 Execute API Call:
-sqlSELECT api_gateway(
+SELECT api_gateway(
     '/api/v1/users',
     'GET',
     OBJECT_CONSTRUCT('limit', 10),
@@ -71,8 +72,9 @@ sqlSELECT api_gateway(
     '192.168.1.100',
     'Mozilla/5.0'
 ) as response;
+
 Get AI-Powered Analytics:
-sqlSELECT analyze_api_usage() as insights;
+SELECT analyze_api_usage() as insights;
 Benefits of This Approach
 
 No External Infrastructure: Everything runs within Snowflake
